@@ -2,6 +2,19 @@ import Menu from './Menu.js';
 
 const Order = {
     cart: [],
+    load: () => {
+        try {
+            if(localStorage.getItem('cm-cart')){
+                Order.cart = JSON.parse(localStorage.getItem('cm-cart'));
+                Order.render();
+            }
+        } catch(e){ 
+            localStorage.removeItem('cm-cart');
+        }
+    },
+    save: () => {
+        localStorage.setItem('cm-cart', JSON.stringify(Order.cart));
+    },
     add: async id => {
         const product = await Menu.getProductById(id);
         const results = Order.cart.filter(prodInCart => prodInCart.product.id==id);
@@ -11,10 +24,12 @@ const Order = {
             Order.cart.push({product, quantity: 1})
         }
         Order.render();
+        Order.save();
     },
     remove: (id) => {
         Order.cart = Order.cart.filter(prodInCart => prodInCart.product.id!=id);
         Order.render();
+        Order.save();
     },
     place: () => {
         alert("Your order will be ready under the number " + 
@@ -61,4 +76,5 @@ const Order = {
     }
 }
 window.Order = Order; // make it "public"
+Order.load()
 export default Order;

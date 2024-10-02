@@ -17,6 +17,7 @@ import Router from './Router.js';
     if(navigator?.storage?.estimate){
         const q = await navigator.storage.estimate();
         console.log(`Estimate Quota available: ${q.quota/1024/1024}MB`);
+        console.log(`Quota used: ${q.usage}`);
     }
 })()
 
