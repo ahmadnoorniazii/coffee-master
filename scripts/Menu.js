@@ -2,8 +2,45 @@ import API from './API.js';
 
 const Menu = {
     data: null,
+    openDB: async () => {
+        return await idb.openDB('cm-menu', 1, {
+            async upgrade(db){
+                await db.createObjectStore('categories', {
+                    keyPath: 'name'
+                })
+            }
+        });
+    },
     load: async () => {
-        Menu.data = await API.fetchMenu();
+        // Network First
+        const db = await Menu.openDB();
+        try {
+            // We try to fetch from the network
+            const data = await API.fetchMenu();
+            Menu.data = data;
+            console.log("Data from the network");
+            // If succeded, also update the cached version
+            db.clear('categories');            
+            data.forEach(category => db.add('categories', category));
+        } catch (e) {
+            // Network error, we go to the cache
+            if (await db.count('categories') > 0) {
+                Menu.data = await db.getAll('categories');
+                console.log("Data from the cache");
+            } else {
+                // No cached data is available :(
+                console.log("No data is available");
+            }
+        }
+        Menu.render();
+    },
+    loadCacheFirst: async () => {
+        const db = await Menu.openDB();
+         if(await db.count('categories') == 0){
+            const categories = await API.fetchMenu();
+            categories.forEach((category) => db.add('categories', category))
+         }
+        Menu.data = await db.getAll('categories');
         Menu.render();
     },
     getProductById: async id => {
