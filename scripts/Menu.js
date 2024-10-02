@@ -32,7 +32,14 @@ const Menu = {
                 console.log("No data is available");
             }
         }
+        if (Menu.data) {
+            const imageCache = await caches.open("cm-images");
+            Menu.data.forEach(c=>imageCache.addAll(
+                c.products.map(p=>`/data/images/${p.image}`)
+            ));
+        }
         Menu.render();
+
     },
     loadCacheFirst: async () => {
         const db = await Menu.openDB();

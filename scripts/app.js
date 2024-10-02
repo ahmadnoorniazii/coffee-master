@@ -2,6 +2,8 @@ import Menu from './Menu.js';
 import Order from './Order.js';
 import Router from './Router.js';
 
+navigator.serviceWorker.register("/serviceworker.js");
+
 (async () => {
     if(navigator?.storage?.persist){
         if(!await navigator.storage.persisted()){
