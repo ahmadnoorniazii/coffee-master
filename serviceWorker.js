@@ -2,6 +2,7 @@ self.addEventListener("install", async event => {
     const assets = ["/", "styles.css", "/scripts/API.js", "/scripts/app.js", 
             "/scripts/Menu.js", "/scripts/Order.js", "/scripts/Router.js",
             "/images/logo.svg", "/images/icons/icon.png",
+            'data/menu.json',  '/app.webmanifest',
             "https://cdn.jsdelivr.net/npm/idb@7/build/umd.js",
             "https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700&display=swap",
             "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0",
@@ -19,7 +20,6 @@ self.addEventListener("install", async event => {
 
 self.addEventListener("fetch", async event => {
     event.respondWith(
-
         (async () => {
             try {
                 const fetchResponse = await fetch(event.request);

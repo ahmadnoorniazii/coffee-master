@@ -5,8 +5,9 @@ const Menu = {
     openDB: async () => {
         return await idb.openDB('cm-menu', 1, {
             async upgrade(db){
-                await db.createObjectStore('categories', {
-                    keyPath: 'name'
+                await db.createObjectStore('categories')
+                await db.createObjectStore('products', {
+                    keyPath: 'id'
                 })
             }
         });
@@ -18,28 +19,41 @@ const Menu = {
             // We try to fetch from the network
             const data = await API.fetchMenu();
             Menu.data = data;
+            console.log(data)
+            const tx = db.transaction(['categories', 'products'], 'readwrite');
+            const categoryStore = tx.objectStore('categories'); 
+            const productsStore = tx.objectStore('products');
+            await categoryStore.clear();
+            const categories = data.map(({ name },index) => categoryStore.add(name, index))
+            await Promise.all(categories)
+            await productsStore.clear();
+            const addedProducts = data.flatMap(({ products }, categoryIndex) => products?.map(p => productsStore.add({...p, categoryId: categoryIndex})))
+            await Promise.all(addedProducts);
+            await tx.done;
             console.log("Data from the network");
-            // If succeded, also update the cached version
-            db.clear('categories');            
-            data.forEach(category => db.add('categories', category));
         } catch (e) {
+            console.log('Error',e)
+            const count = await db.count('categories') && await db.count('products');
             // Network error, we go to the cache
-            if (await db.count('categories') > 0) {
-                Menu.data = await db.getAll('categories');
-                console.log("Data from the cache");
+            if (count) {
+                const categories = await db.getAll('categories');
+                const allProducts = await db.getAll('products');
+                Menu.data = categories.map((cat, index)=> {
+                    const products = allProducts.filter(({ categoryId }) => categoryId == index)
+                    return { name:cat, products }
+                })
+                console.log("Data from the cache", e);
             } else {
-                // No cached data is available :(
                 console.log("No data is available");
             }
         }
         if (Menu.data) {
             const imageCache = await caches.open("cm-images");
-            Menu.data.forEach(c=>imageCache.addAll(
+            Menu.data.forEach(c => imageCache.addAll(
                 c.products.map(p=>`/data/images/${p.image}`)
             ));
         }
         Menu.render();
-
     },
     loadCacheFirst: async () => {
         const db = await Menu.openDB();
